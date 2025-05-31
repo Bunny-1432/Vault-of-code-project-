@@ -7,18 +7,18 @@
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: #fff4f2;
+      background: linear-gradient(135deg, #ffe8e2, #fff4f2);
       padding: 20px;
       margin: 0;
     }
 
     .recipe-card {
-      max-width: 600px;
+      max-width: 700px;
       margin: auto;
       background: #fff;
-      padding: 20px;
-      border-radius: 16px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      padding: 25px;
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
       transition: transform 0.3s ease;
     }
 
@@ -28,22 +28,28 @@
 
     .dish-image {
       width: 100%;
-      border-radius: 12px;
+      border-radius: 16px;
+      margin-bottom: 20px;
+    }
+
+    .info {
       margin-bottom: 15px;
     }
 
     .info p {
-      margin: 5px 0;
+      margin: 6px 0;
+      font-size: 16px;
     }
 
     button {
       margin: 10px 0;
-      padding: 10px 15px;
+      padding: 12px 18px;
       border: none;
       background: #d66b44;
       color: #fff;
-      border-radius: 8px;
+      border-radius: 10px;
       cursor: pointer;
+      font-size: 15px;
       transition: background 0.3s ease;
     }
 
@@ -52,7 +58,10 @@
     }
 
     ul li, ol li {
-      padding: 5px;
+      padding: 8px 10px;
+      margin: 5px 0;
+      background: #fff8f6;
+      border-radius: 8px;
       transition: background 0.3s ease;
     }
 
@@ -67,34 +76,42 @@
 
     .progress-container {
       width: 100%;
-      background: #eee;
+      background: #f0f0f0;
       border-radius: 10px;
-      height: 12px;
-      margin-top: 20px;
+      height: 14px;
+      margin-top: 25px;
       overflow: hidden;
     }
 
     .progress-bar {
       height: 100%;
-      background: #d66b44;
+      background: linear-gradient(to right, #f49c77, #d66b44);
       width: 0%;
       transition: width 0.5s ease;
     }
 
     .step-active {
-      background: #ffe0d2 !important;
+      background: #ffe3d6 !important;
       font-weight: bold;
     }
 
     .controls {
       display: flex;
+      flex-wrap: wrap;
       gap: 10px;
-      margin-top: 15px;
+      margin-top: 20px;
+    }
+
+    #timer-display {
+      margin-top: 10px;
+      font-size: 16px;
+      color: #d66b44;
+      font-weight: bold;
     }
 
     @media (max-width: 600px) {
       .recipe-card {
-        padding: 15px;
+        padding: 18px;
       }
 
       button {
@@ -115,7 +132,7 @@
         box-shadow: none;
         border: none;
       }
-      button, .progress-container, .controls {
+      button, .progress-container, .controls, #timer-display {
         display: none;
       }
     }
@@ -131,7 +148,7 @@
       <p><strong>Serves:</strong> 8</p>
     </div>
 
-    <button id="toggle-ingredients">Show Ingredients</button>
+    <button id="toggle-ingredients" aria-expanded="false" aria-controls="ingredients">Show Ingredients</button>
     <ul id="ingredients" class="hidden">
       <li>2 cups flour</li>
       <li>1.5 cups sugar</li>
@@ -140,7 +157,7 @@
       <li>1 cup milk</li>
     </ul>
 
-    <button id="toggle-steps">Show Steps</button>
+    <button id="toggle-steps" aria-expanded="false" aria-controls="steps">Show Steps</button>
     <ol id="steps" class="hidden">
       <li>Preheat oven to 350°F (175°C).</li>
       <li>Mix dry ingredients in a bowl.</li>
@@ -152,6 +169,8 @@
     <div class="progress-container">
       <div class="progress-bar" id="progress-bar"></div>
     </div>
+
+    <div id="timer-display" class="hidden">Time Left: 45:00</div>
 
     <div class="controls">
       <button id="start-cooking">Start Cooking</button>
@@ -168,33 +187,45 @@
     const startBtn = document.getElementById("start-cooking");
     const nextBtn = document.getElementById("next-step");
     const progressBar = document.getElementById("progress-bar");
+    const timerDisplay = document.getElementById("timer-display");
 
     let currentStep = 0;
+    let timerInterval;
+    let timeLeft = 2700; // 45 minutes
 
     ingredientsBtn.onclick = () => {
-      ingredientsList.classList.toggle("hidden");
-      ingredientsBtn.textContent = ingredientsList.classList.contains("hidden") ? "Show Ingredients" : "Hide Ingredients";
+      const isHidden = ingredientsList.classList.toggle("hidden");
+      ingredientsBtn.textContent = isHidden ? "Show Ingredients" : "Hide Ingredients";
+      ingredientsBtn.setAttribute("aria-expanded", !isHidden);
     };
 
     stepsBtn.onclick = () => {
-      stepsList.classList.toggle("hidden");
-      stepsBtn.textContent = stepsList.classList.contains("hidden") ? "Show Steps" : "Hide Steps";
+      const isHidden = stepsList.classList.toggle("hidden");
+      stepsBtn.textContent = isHidden ? "Show Steps" : "Hide Steps";
+      stepsBtn.setAttribute("aria-expanded", !isHidden);
     };
 
     startBtn.onclick = () => {
       currentStep = 0;
+      Array.from(stepsList.children).forEach(step => step.classList.remove("step-active"));
       highlightStep(currentStep);
       nextBtn.disabled = false;
       updateProgressBar(currentStep);
 
-      Optional Timer:
-       clearInterval(timerInterval);
-       timeLeft = 2700;
-       timerInterval = setInterval(() => {
-       timeLeft--;
-       document.title = `Time Left: ${Math.floor(timeLeft/60)}:${String(timeLeft%60).padStart(2,'0')}`;
-       if (timeLeft <= 0) clearInterval(timerInterval);
-       }, 1000);
+      // Timer logic
+      clearInterval(timerInterval);
+      timeLeft = 2700;
+      timerDisplay.classList.remove("hidden");
+      updateTimerDisplay();
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        updateTimerDisplay();
+        document.title = `🍫 ${formatTime(timeLeft)} left - Chocolate Cake`;
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          document.title = "⏰ Time's up! Cake is ready!";
+        }
+      }, 1000);
     };
 
     nextBtn.onclick = () => {
@@ -222,6 +253,16 @@
       const percent = ((stepIndex + 1) / total) * 100;
       progressBar.style.width = `${percent}%`;
     }
+
+    function formatTime(seconds) {
+      const min = Math.floor(seconds / 60);
+      const sec = String(seconds % 60).padStart(2, '0');
+      return `${min}:${sec}`;
+    }
+
+    function updateTimerDisplay() {
+      timerDisplay.textContent = `Time Left: ${formatTime(timeLeft)}`;
+    }
   </script>
 </body>
-</html>
+</html>    
