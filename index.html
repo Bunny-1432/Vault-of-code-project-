@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🍫 Chocolate Cake Recipe</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #fff4f2;
+      padding: 20px;
+      margin: 0;
+    }
+
+    .recipe-card {
+      max-width: 600px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease;
+    }
+
+    .recipe-card:hover {
+      transform: scale(1.01);
+    }
+
+    .dish-image {
+      width: 100%;
+      border-radius: 12px;
+      margin-bottom: 15px;
+    }
+
+    .info p {
+      margin: 5px 0;
+    }
+
+    button {
+      margin: 10px 0;
+      padding: 10px 15px;
+      border: none;
+      background: #d66b44;
+      color: #fff;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: #b45635;
+    }
+
+    ul li, ol li {
+      padding: 5px;
+      transition: background 0.3s ease;
+    }
+
+    ul li:hover, ol li:hover {
+      background: #fff0ec;
+      cursor: pointer;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .progress-container {
+      width: 100%;
+      background: #eee;
+      border-radius: 10px;
+      height: 12px;
+      margin-top: 20px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: #d66b44;
+      width: 0%;
+      transition: width 0.5s ease;
+    }
+
+    .step-active {
+      background: #ffe0d2 !important;
+      font-weight: bold;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    @media (max-width: 600px) {
+      .recipe-card {
+        padding: 15px;
+      }
+
+      button {
+        width: 100%;
+      }
+
+      .controls {
+        flex-direction: column;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+        font-size: 12pt;
+      }
+      .recipe-card {
+        box-shadow: none;
+        border: none;
+      }
+      button, .progress-container, .controls {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="recipe-card">
+    <h1>🍫 Chocolate Cake</h1>
+    <img src="https://www.hersheyland.com/recipes/hersheys-deep-dark-chocolate-cake.html" alt="Chocolate Cake" class="dish-image" />
+    
+    <div class="info">
+      <p><strong>Prep Time:</strong> 45 mins</p>
+      <p><strong>Serves:</strong> 8</p>
+    </div>
+
+    <button id="toggle-ingredients">Show Ingredients</button>
+    <ul id="ingredients" class="hidden">
+      <li>2 cups flour</li>
+      <li>1.5 cups sugar</li>
+      <li>3/4 cup cocoa powder</li>
+      <li>2 eggs</li>
+      <li>1 cup milk</li>
+    </ul>
+
+    <button id="toggle-steps">Show Steps</button>
+    <ol id="steps" class="hidden">
+      <li>Preheat oven to 350°F (175°C).</li>
+      <li>Mix dry ingredients in a bowl.</li>
+      <li>Add eggs and milk; mix until smooth.</li>
+      <li>Pour into a greased baking pan.</li>
+      <li>Bake for 30–35 minutes.</li>
+    </ol>
+
+    <div class="progress-container">
+      <div class="progress-bar" id="progress-bar"></div>
+    </div>
+
+    <div class="controls">
+      <button id="start-cooking">Start Cooking</button>
+      <button id="next-step" disabled>Next Step</button>
+    </div>
+  </div>
+
+  <script>
+    const ingredientsBtn = document.getElementById("toggle-ingredients");
+    const stepsBtn = document.getElementById("toggle-steps");
+    const ingredientsList = document.getElementById("ingredients");
+    const stepsList = document.getElementById("steps");
+
+    const startBtn = document.getElementById("start-cooking");
+    const nextBtn = document.getElementById("next-step");
+    const progressBar = document.getElementById("progress-bar");
+
+    let currentStep = 0;
+
+    ingredientsBtn.onclick = () => {
+      ingredientsList.classList.toggle("hidden");
+      ingredientsBtn.textContent = ingredientsList.classList.contains("hidden") ? "Show Ingredients" : "Hide Ingredients";
+    };
+
+    stepsBtn.onclick = () => {
+      stepsList.classList.toggle("hidden");
+      stepsBtn.textContent = stepsList.classList.contains("hidden") ? "Show Steps" : "Hide Steps";
+    };
+
+    startBtn.onclick = () => {
+      currentStep = 0;
+      highlightStep(currentStep);
+      nextBtn.disabled = false;
+      updateProgressBar(currentStep);
+
+      Optional Timer:
+       clearInterval(timerInterval);
+       timeLeft = 2700;
+       timerInterval = setInterval(() => {
+       timeLeft--;
+       document.title = `Time Left: ${Math.floor(timeLeft/60)}:${String(timeLeft%60).padStart(2,'0')}`;
+       if (timeLeft <= 0) clearInterval(timerInterval);
+       }, 1000);
+    };
+
+    nextBtn.onclick = () => {
+      unhighlightStep(currentStep);
+      currentStep++;
+      if (currentStep < stepsList.children.length) {
+        highlightStep(currentStep);
+        updateProgressBar(currentStep);
+      } else {
+        nextBtn.disabled = true;
+        progressBar.style.width = "100%";
+      }
+    };
+
+    function highlightStep(index) {
+      stepsList.children[index].classList.add("step-active");
+    }
+
+    function unhighlightStep(index) {
+      stepsList.children[index].classList.remove("step-active");
+    }
+
+    function updateProgressBar(stepIndex) {
+      const total = stepsList.children.length;
+      const percent = ((stepIndex + 1) / total) * 100;
+      progressBar.style.width = `${percent}%`;
+    }
+  </script>
+</body>
+</html>
